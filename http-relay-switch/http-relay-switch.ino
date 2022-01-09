@@ -12,23 +12,34 @@ const char* password = "";
 // http server setup
 ESP8266WebServer server(80);
 
-void handleRelaySwitch() {
-  if (server.method() != HTTP_POST) {
+void handleSwitchOn() {
+  if (server.method() != HTTP_GET) {
     server.send(405, "text/plain", "Method not allowed");
   } else {
-    relayState = !relayState;
+    relayState = HIGH;
     digitalWrite(relayPin, relayState);
     server.send(200, "text/plain", "");
   }
 }
 
-void handleRelayState() {
+void handleSwitchOff() {
   if (server.method() != HTTP_GET) {
     server.send(405, "text/plain", "Method not allowed");
   } else {
-    char message[10];
-    snprintf(message, sizeof(message), "State: %d", relayState);
-    server.send(200, "text/plain", message);
+    relayState = LOW;
+    digitalWrite(relayPin, relayState);
+    server.send(200, "text/plain", "");
+  }
+}
+
+void handleSwitchStatus() {
+  if (server.method() != HTTP_GET) {
+    server.send(405, "text/plain", "Method not allowed");
+  } else {
+    char msg[10];
+    sprintf(msg, "%d", relayState);
+    Serial.println(msg);
+    server.send(200, "text/plain", msg);
   }
 }
 
@@ -54,8 +65,9 @@ void setup() {
   digitalWrite(relayPin, relayState);
 
   // server setup
-  server.on("/relay-switch", handleRelaySwitch);
-  server.on("/relay-state", handleRelayState);
+  server.on("/switchOn", handleSwitchOn);
+  server.on("/switchOff", handleSwitchOff);
+  server.on("/switchStatus", handleSwitchStatus);
   server.onNotFound(handleNotFound);
 
   // start server
